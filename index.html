@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>البحث البنكي</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#0a0e1a;color:#e2e8f0;min-height:100vh;direction:rtl}
+
+/* LOGIN */
+#pg-login{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.box{background:#1a2235;border:1px solid #2a3a55;border-radius:16px;padding:44px 36px;width:380px;text-align:center}
+.ico{font-size:52px;margin-bottom:14px}
+h1{font-size:21px;font-weight:700;margin-bottom:4px}
+.sub{color:#64748b;font-size:13px;margin-bottom:24px}
+.sec-label{color:#94a3b8;font-size:12px;font-weight:600;text-align:right;margin-bottom:6px}
+input[type=password]{width:100%;padding:13px;background:#111827;border:2px solid #2a3a55;
+  border-radius:10px;color:#e2e8f0;font-size:18px;text-align:center;letter-spacing:6px;
+  outline:none;margin-bottom:16px;direction:ltr;font-family:monospace}
+input[type=password]:focus{border-color:#3b82f6}
+.user-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.user-btn{padding:10px;border:2px solid #2a3a55;border-radius:10px;background:#111827;
+  color:#e2e8f0;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:Arial}
+.user-btn:hover{border-color:#3b82f6;background:#1e3a5f}
+.user-btn.selected{color:#fff;transform:scale(1.03)}
+.btn{width:100%;padding:13px;background:#3b82f6;border:none;border-radius:10px;
+  color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:Arial}
+.btn:hover{background:#2563eb}
+#err{color:#f87171;margin-top:12px;font-size:13px;display:none}
+
+/* LOADING */
+#pg-load{display:none;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px}
+.spin{width:46px;height:46px;border:4px solid #2a3a55;border-top-color:#3b82f6;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#load-txt{color:#64748b;font-size:14px}
+
+/* APP */
+#pg-app{display:none}
+.top{position:sticky;top:0;z-index:99;background:rgba(10,14,26,.97);border-bottom:1px solid #2a3a55;padding:10px 16px}
+.top-in{max-width:1300px;margin:0 auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.logo{font-size:15px;font-weight:700;color:#06b6d4;white-space:nowrap}
+.user-tag{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;border:1.5px solid}
+.sw{flex:1;min-width:180px;position:relative}
+.sq{width:100%;padding:10px 14px;background:#1a2235;border:2px solid #2a3a55;border-radius:10px;
+  color:#e2e8f0;font-size:14px;outline:none;direction:rtl;font-family:Arial}
+.sq:focus{border-color:#3b82f6}
+.sq::placeholder{color:#64748b}
+.filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+select{padding:8px 10px;background:#1a2235;border:2px solid #2a3a55;border-radius:9px;
+  color:#e2e8f0;font-family:Arial;font-size:12px;outline:none;cursor:pointer;direction:rtl}
+.num{width:88px;padding:8px;background:#1a2235;border:2px solid #2a3a55;border-radius:9px;
+  color:#e2e8f0;font-size:12px;outline:none;text-align:center;direction:ltr}
+.rbtn{padding:8px 12px;background:rgba(16,185,129,.2);border:2px solid rgba(16,185,129,.4);
+  border-radius:9px;color:#34d399;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial}
+
+.stats{max-width:1300px;margin:6px auto;padding:0 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px}
+.badge{padding:3px 11px;border-radius:20px;font-weight:700;font-size:12px}
+.b-blue{background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.3);color:#93c5fd}
+.b-gold{background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.3);color:#fcd34d}
+.gray{color:#64748b}
+.gold{color:#f59e0b;font-family:monospace;font-weight:700}
+
+.wrap{max-width:1300px;margin:0 auto;padding:0 16px 60px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:8px 12px;background:#111827;color:#64748b;font-weight:700;font-size:10px;
+  text-align:right;border-bottom:2px solid #2a3a55;position:sticky;top:62px;z-index:10;white-space:nowrap}
+tr.drow{border-bottom:1px solid rgba(42,58,85,.4)}
+tr.drow:hover{background:rgba(59,130,246,.05)}
+tr.match{background:rgba(245,158,11,.09);border-right:3px solid #f59e0b}
+tr.fade{opacity:.15}
+tr.sep td{padding:4px;background:#111827;color:#64748b;font-size:10px;text-align:center;
+  border-top:2px solid #2a3a55;border-bottom:2px solid #2a3a55;font-weight:700}
+td{padding:9px 12px;vertical-align:middle;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bnk{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.r{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+.f{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3)}
+.a{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.x{background:rgba(167,139,250,.15);color:#c4b5fd;border:1px solid rgba(167,139,250,.3)}
+.amt{font-family:monospace;font-weight:700;color:#10b981;text-align:left;direction:ltr}
+.dbt{font-family:monospace;font-weight:700;color:#f87171;text-align:left;direction:ltr}
+.refc{font-family:monospace;font-size:10px;color:#64748b}
+.hl{background:rgba(245,158,11,.4);color:#fff;border-radius:2px;padding:0 2px}
+
+/* Status cell */
+.status-cell{text-align:center;min-width:100px}
+.tag-done{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;white-space:nowrap}
+.tag-btn{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;
+  border:1.5px dashed #2a3a55;background:transparent;color:#64748b;font-family:Arial}
+.tag-btn:hover{border-color:#3b82f6;color:#93c5fd}
+
+.empty{text-align:center;padding:60px 20px;color:#64748b}
+.empty .ei{font-size:44px;margin-bottom:10px}
+.empty h3{font-size:17px;color:#e2e8f0;margin-bottom:4px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="pg-login">
+  <div class="box">
+    <div class="ico">🏦</div>
+    <h1>محرك البحث البنكي</h1>
+    <div class="sub">الشركة الوطنية للصناعات الغذائية</div>
+    
+    <div class="sec-label">كلمة المرور</div>
+    <input type="password" id="pw" placeholder="••••••••" maxlength="30">
+    
+    <div class="sec-label">اختر اسمك</div>
+    <div class="user-grid" id="user-grid"></div>
+    
+    <button class="btn" id="login-btn">دخول ←</button>
+    <div id="err"></div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="pg-load">
+  <div class="spin"></div>
+  <div id="load-txt">جاري التحميل...</div>
+</div>
+
+<!-- APP -->
+<div id="pg-app">
+  <div class="top">
+    <div class="top-in">
+      <div class="logo">🔍 البحث البنكي</div>
+      <div class="user-tag" id="utag"></div>
+      <div class="sw">
+        <input type="text" class="sq" id="q" placeholder="اكتب أي شيء: مبلغ، اسم، تاريخ، رقم مرجع..." autocomplete="off">
+      </div>
+      <div class="filters">
+        <select id="bf"><option value="">🏦 كل البنوك</option></select>
+        <select id="ac">
+          <option value="all">💰 كل المبالغ</option>
+          <option value="eq">= يساوي</option>
+          <option value="gt">> أكبر من</option>
+          <option value="lt">< أصغر من</option>
+          <option value="bw">↔ بين</option>
+        </select>
+        <input type="number" class="num" id="a1" placeholder="مبلغ" style="display:none">
+        <input type="number" class="num" id="a2" placeholder="إلى" style="display:none">
+        <button class="rbtn" id="reload-btn">🔄 تحديث</button>
+      </div>
+    </div>
+  </div>
+  <div class="stats">
+    <span class="badge b-blue" id="tc">0 سجل</span>
+    <span class="badge b-gold" id="mc" style="display:none">0 مطابق</span>
+    <span class="gray" id="ml" style="display:none">مجموع:</span>
+    <span class="gold" id="tt" style="display:none"></span>
+    <span class="gray" id="upd"></span>
+  </div>
+  <div class="wrap">
+    <table id="tbl" style="display:none">
+      <thead><tr>
+        <th>البنك</th><th>التاريخ</th><th>نوع العملية</th>
+        <th>الوصف</th><th>المرجع</th><th>المبلغ (ريال)</th><th>مدين</th>
+        <th>الحالة</th>
+      </tr></thead>
+      <tbody id="bd"></tbody>
+    </table>
+    <div class="empty" id="wl">
+      <div class="ei">👆</div><h3>ابدأ بالبحث</h3>
+      <div>اكتب في خانة البحث أو اختر البنك</div>
+    </div>
+    <div class="empty" id="nr" style="display:none">
+      <div class="ei">🔍</div><h3>لا توجد نتائج</h3>
+    </div>
+  </div>
+</div>
+
+<script>
+var PASS = ['B','a','n','3','7','7','8'].join('');
+var CSV  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQymOcx9f3XOfmX0D4op1454_sw-zK1JWovbwKImlR3IAVj8F9lOU6YcYiDGoE8lBOAvXS3_2Stov9F/pub?gid=0&single=true&output=csv';
+var FB   = 'https://bank-search-cc960-default-rtdb.asia-southeast1.firebasedatabase.app';
+var USERS = [["أمجد اللحياني","#f59e0b"],["أحمد الوافي","#3b82f6"],["حسين الطائفي","#10b981"],["وائل","#ef4444"],["هاني المغربي","#8b5cf6"]];
+
+var currentUser = null;
+var DATA=[], ROWS=[], SEP=null, TAGS={};
+
+// ── Build user buttons ──
+var grid = document.getElementById('user-grid');
+USERS.forEach(function(u){
+  var btn = document.createElement('button');
+  btn.className = 'user-btn';
+  btn.textContent = u[0];
+  btn.dataset.name = u[0];
+  btn.dataset.color = u[1];
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.user-btn').forEach(function(b){
+      b.classList.remove('selected');
+      b.style.borderColor = '#2a3a55';
+      b.style.background = '#111827';
+    });
+    btn.classList.add('selected');
+    btn.style.borderColor = u[1];
+    btn.style.background = u[1]+'22';
+    btn.style.color = u[1];
+    currentUser = {name: u[0], color: u[1]};
+  });
+  grid.appendChild(btn);
+});
+
+// ── Login ──
+document.getElementById('login-btn').addEventListener('click', tryLogin);
+document.getElementById('pw').addEventListener('keydown', function(e){ if(e.key==='Enter') tryLogin(); });
+
+function tryLogin(){
+  var v = document.getElementById('pw').value.replace(/\s/g,'');
+  var err = document.getElementById('err');
+  if(v !== PASS){ err.style.display='block'; err.style.color='#f87171'; err.textContent='❌ كلمة المرور خاطئة'; document.getElementById('pw').value=''; return; }
+  if(!currentUser){ err.style.display='block'; err.style.color='#f59e0b'; err.textContent='⚠️ اختر اسمك أولاً'; return; }
+  err.style.display='none';
+  document.getElementById('pg-login').style.display='none';
+  document.getElementById('pg-load').style.display='flex';
+  // Show user tag
+  var tag = document.getElementById('utag');
+  tag.textContent = '👤 ' + currentUser.name;
+  tag.style.color = currentUser.color;
+  tag.style.borderColor = currentUser.color;
+  tag.style.background = currentUser.color+'18';
+  loadAll();
+}
+
+// ── Load data ──
+function loadAll(){
+  document.getElementById('load-txt').textContent = 'جاري تحميل بيانات البنوك...';
+  fetch(CSV)
+    .then(function(r){ return r.text(); })
+    .then(function(txt){
+      document.getElementById('load-txt').textContent = 'جاري تحميل التقييدات...';
+      DATA = parseCSV(txt).filter(function(r){return r.b;});
+      return fetch(FB+'/tags.json');
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(fbData){
+      TAGS = fbData || {};
+      document.getElementById('pg-load').style.display='none';
+      document.getElementById('pg-app').style.display='block';
+      buildTable();
+      listenTags();
+    })
+    .catch(function(e){
+      document.getElementById('load-txt').textContent = '⚠️ فشل التحميل - تحقق من الاتصال';
+    });
+}
+
+// ── Firebase real-time listener ──
+function listenTags(){
+  var es = new EventSource(FB+'/tags.json?accept=text/event-stream');
+  es.addEventListener('put', function(e){
+    try{
+      var d = JSON.parse(e.data);
+      if(d.path==='/') TAGS = d.data||{};
+      else {
+        var key = d.path.replace('/','');
+        if(d.data===null) delete TAGS[key];
+        else TAGS[key] = d.data;
+      }
+      refreshTags();
+    }catch(err){}
+  });
+}
+
+function refreshTags(){
+  ROWS.forEach(function(tr, i){
+    var key = 'r'+i;
+    var cell = tr.querySelector('.status-cell');
+    if(!cell) return;
+    renderTag(cell, key, i);
+  });
+}
+
+function renderTag(cell, key, idx){
+  cell.innerHTML = '';
+  var tag = TAGS[key];
+  if(tag){
+    var span = document.createElement('span');
+    span.className = 'tag-done';
+    span.style.background = tag.color+'22';
+    span.style.color = tag.color;
+    span.style.border = '1.5px solid '+tag.color;
+    span.textContent = '✓ '+tag.name;
+    // Click to remove if same user
+    if(tag.name === currentUser.name){
+      span.style.cursor='pointer';
+      span.title='اضغط للإلغاء';
+      span.addEventListener('click', function(){ removeTag(key); });
+    }
+    cell.appendChild(span);
+  } else {
+    var btn = document.createElement('button');
+    btn.className='tag-btn';
+    btn.textContent='+ تقييد';
+    btn.addEventListener('click', function(){ addTag(key); });
+    cell.appendChild(btn);
+  }
+}
+
+function addTag(key){
+  fetch(FB+'/tags/'+key+'.json', {
+    method:'PUT',
+    body: JSON.stringify({name:currentUser.name, color:currentUser.color, ts:Date.now()})
+  });
+}
+function removeTag(key){
+  fetch(FB+'/tags/'+key+'.json', {method:'DELETE'});
+}
+
+// ── Build table ──
+function buildTable(){
+  var bd=document.getElementById('bd');
+  bd.innerHTML=''; ROWS=[]; SEP=null;
+  var banks=[]; DATA.forEach(function(r){if(banks.indexOf(r.b)<0)banks.push(r.b);}); banks.sort();
+  var sel=document.getElementById('bf');
+  sel.innerHTML='<option value="">🏦 كل البنوك</option>';
+  banks.forEach(function(b){var o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o);});
+  SEP=document.createElement('tr'); SEP.className='sep'; SEP.style.display='none';
+  SEP.innerHTML='<td colspan="8"></td>';
+  DATA.forEach(function(r,i){
+    var tr=document.createElement('tr'); tr.className='drow';
+    var statusCell = '<td class="status-cell"></td>';
+    tr.innerHTML='<td><span class="bnk '+bc(r.b)+'">'+es(r.b)+'</span></td>'+
+      '<td>'+es(r.d)+'</td><td class="op">'+es(r.t)+'</td>'+
+      '<td class="ds" title="'+es(r.desc)+'">'+es(r.desc)+'</td>'+
+      '<td class="refc rf">'+es(r.ref)+'</td>'+
+      '<td class="amt">'+fm(r.amt)+'</td><td class="dbt">'+(r.deb?String(r.deb):'')+'</td>'+
+      statusCell;
+    var cell=tr.querySelector('.status-cell');
+    renderTag(cell,'r'+i,i);
+    bd.appendChild(tr); ROWS.push(tr);
+  });
+  bd.appendChild(SEP);
+  document.getElementById('tc').textContent=DATA.length.toLocaleString('en-US')+' سجل';
+  var now=new Date();
+  document.getElementById('upd').textContent='آخر تحديث: '+now.toLocaleTimeString('ar-SA');
+  document.getElementById('q').addEventListener('input',srch);
+  document.getElementById('bf').addEventListener('change',srch);
+  document.getElementById('ac').addEventListener('change',function(){
+    var c=this.value;
+    document.getElementById('a1').style.display=c==='all'?'none':'inline-block';
+    document.getElementById('a2').style.display=c==='bw'?'inline-block':'none';
+    srch();
+  });
+  document.getElementById('a1').addEventListener('input',srch);
+  document.getElementById('a2').addEventListener('input',srch);
+  document.getElementById('reload-btn').addEventListener('click',function(){
+    document.getElementById('pg-app').style.display='none';
+    document.getElementById('pg-load').style.display='flex';
+    DATA=[]; ROWS=[]; TAGS={};
+    loadAll();
+  });
+}
+
+// ── Search ──
+function srch(){
+  var q=document.getElementById('q').value.trim().toLowerCase();
+  var bk=document.getElementById('bf').value;
+  var cd=document.getElementById('ac').value;
+  var a1=parseFloat(document.getElementById('a1').value)||null;
+  var a2=parseFloat(document.getElementById('a2').value)||null;
+  var hf=q||bk||(cd!=='all'&&a1!==null);
+  var bd=document.getElementById('bd');
+  var tbl=document.getElementById('tbl');
+  if(!hf){
+    document.getElementById('wl').style.display='block';
+    tbl.style.display='none';
+    document.getElementById('nr').style.display='none';
+    SEP.style.display='none';
+    ROWS.forEach(function(tr){tr.className='drow';});
+    document.getElementById('mc').style.display='none';
+    document.getElementById('ml').style.display='none';
+    document.getElementById('tt').style.display='none';
+    document.getElementById('tc').textContent=DATA.length.toLocaleString('en-US')+' سجل';
+    return;
+  }
+  document.getElementById('wl').style.display='none';
+  var mt=[],um=[];
+  ROWS.forEach(function(tr,i){
+    var r=DATA[i];
+    var h=(r.b+'|'+r.d+'|'+r.t+'|'+r.desc+'|'+r.ref+'|'+r.amt+'|'+String(r.deb||'')).toLowerCase();
+    var tm=!q||h.indexOf(q)>-1;
+    var bm=!bk||r.b===bk;
+    var am=true;
+    if(cd!=='all'&&a1!==null){
+      var v=r.amt||0;
+      var v2=parseFloat(r.deb)||0; if(cd==='eq')am=Math.abs(v-a1)<0.005||Math.abs(v2-a1)<0.005;
+      else if(cd==='gt')am=v>a1||v2>a1;
+      else if(cd==='lt')am=v<a1||v2<a1;
+      else if(cd==='bw')am=a2!==null?(v>=a1&&v<=a2)||(v2>=a1&&v2<=a2):v>=a1||v2>=a1;
+    }
+    if(tm&&bm&&am)mt.push({tr:tr,r:r,i:i});
+    else um.push({tr:tr,r:r,i:i});
+  });
+  mt.forEach(function(o){
+    o.tr.className='drow match';
+    if(q){o.tr.querySelector('.op').innerHTML=hl(o.r.t,q);o.tr.querySelector('.ds').innerHTML=hl(o.r.desc,q);o.tr.querySelector('.rf').innerHTML=hl(o.r.ref,q);}
+    else{o.tr.querySelector('.op').textContent=o.r.t;o.tr.querySelector('.ds').textContent=o.r.desc;o.tr.querySelector('.rf').textContent=o.r.ref;}
+    bd.insertBefore(o.tr,SEP);
+  });
+  if(mt.length>0&&um.length>0){SEP.style.display='';SEP.querySelector('td').textContent='── '+um.length.toLocaleString('en-US')+' سجل إضافي ──';}
+  else SEP.style.display='none';
+  um.forEach(function(o){
+    o.tr.className='drow fade';
+    o.tr.querySelector('.op').textContent=o.r.t;
+    o.tr.querySelector('.ds').textContent=o.r.desc;
+    o.tr.querySelector('.rf').textContent=o.r.ref;
+    bd.appendChild(o.tr);
+  });
+  var cn=mt.length,tot=mt.reduce(function(s,o){return s+(o.r.amt||0);},0);
+  tbl.style.display=cn>0?'table':'none';
+  document.getElementById('nr').style.display=cn===0?'block':'none';
+  document.getElementById('tc').textContent=DATA.length.toLocaleString('en-US')+' سجل';
+  document.getElementById('mc').style.display='inline-block';
+  document.getElementById('mc').textContent=cn.toLocaleString('en-US')+' مطابق';
+  document.getElementById('ml').style.display='inline';
+  document.getElementById('tt').style.display='inline';
+  document.getElementById('tt').textContent=tot.toLocaleString('en-US',{minimumFractionDigits:2})+' ريال';
+}
+
+// ── Helpers ──
+function parseCSV(txt){
+  var lines=txt.split('\n'),hdrs=splitLine(lines[0]),out=[];
+  for(var i=1;i<lines.length;i++){
+    if(!lines[i].trim())continue;
+    var cols=splitLine(lines[i]),obj={};
+    hdrs.forEach(function(h,j){obj[h]=(cols[j]||'').trim();});
+    // last header = last column name (مدين)
+    var lastH = hdrs[hdrs.length-1];
+    out.push({b:obj['البنك']||'',d:obj['التاريخ']||'',t:obj['نوع العملية']||'',
+      desc:obj['الوصف']||'',ref:obj['المرجع']||'',
+      amt:parseFloat((obj['المبلغ']||'0').replace(/,/g,''))||0,
+      deb:(obj['مدين']||obj['مدين ']||obj[' مدين']||obj[lastH]||'').toString().trim()});
+  }
+  return out;
+}
+function splitLine(line){
+  var cols=[],cur='',inQ=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){cols.push(cur.replace(/^"|"$/g,''));cur='';}
+    else cur+=c;
+  }
+  cols.push(cur.replace(/^"|"$/g,''));
+  return cols;
+}
+function bc(b){if(b.indexOf('راجحي')>-1)return'r';if(b.indexOf('عبد')>-1)return'x';if(b.indexOf('فرنسي')>-1)return'f';if(b.indexOf('أهلي')>-1)return'a';return'r';}
+function fm(n){if(!n||n===0)return'';return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function es(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function hl(s,q){try{return es(s).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),function(m){return'<span class="hl">'+m+'</span>';});}catch(e){return es(s);}}
+</script>
+</body>
+</html>
